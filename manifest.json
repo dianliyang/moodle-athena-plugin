@@ -1,0 +1,16 @@
+{
+  "id": "moodle-sync",
+  "name": "Moodle Sync",
+  "version": "0.1.0",
+  "description": "Sync courses, files, and deadlines from Moodle.",
+  "author": "Athena",
+  "capabilities": [
+    "writeCourses",
+    "writeSchedules"
+  ],
+  "permissions": {
+    "getConfig": true,
+    "setConfig": true,
+    "fetch": true
+  }
+}
