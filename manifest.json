@@ -1,7 +1,7 @@
 {
   "id": "moodle-sync",
   "name": "Moodle Sync",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sync courses, files, and deadlines from Moodle.",
   "author": "Athena",
   "capabilities": [
@@ -12,5 +12,10 @@
     "getConfig": true,
     "setConfig": true,
     "fetch": true
+  },
+  "network": {
+    "domains": [
+      "*"
+    ]
   }
 }
