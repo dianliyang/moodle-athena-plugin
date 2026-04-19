@@ -29,24 +29,50 @@ export default {
       }
     }
 
-    // Mock implementation for now to show structure
-    const warnings = ['Moodle sync is currently a placeholder implementation.']
+    const cleanUrl = moodleUrl.replace(/\/$/, '')
+    const apiUrl = `${cleanUrl}/webservice/rest/server.php`
 
-    return {
-      protocolVersion: 'v1',
-      courses: [
-        {
-          id: 'moodle-sample-1',
-          title: 'Sample Moodle Course',
-          code: 'MOODLE101',
-          instructors: ['Moodle Admin'],
-          url: `${moodleUrl}/course/view.php?id=1`,
-          lifecycleState: 'untouched',
-        }
-      ],
-      schedules: [],
-      sessions: [],
-      warnings,
+    try {
+      // Get user's courses
+      const response = await context.fetch({
+        url: `${apiUrl}?wstoken=${token}&wsfunction=core_enrol_get_users_courses&moodlewsrestformat=json`,
+        method: 'GET',
+      })
+
+      if (response.status !== 200) {
+        throw new Error(`Moodle API returned status ${response.status}`)
+      }
+
+      const moodleCourses = JSON.parse(response.bodyText)
+      
+      if (moodleCourses.exception) {
+        throw new Error(`Moodle Error: ${moodleCourses.message}`)
+      }
+
+      const courses = moodleCourses.map(mc => ({
+        id: `moodle-${mc.id}`,
+        title: mc.fullname,
+        code: mc.shortname,
+        description: mc.summary,
+        url: `${cleanUrl}/course/view.php?id=${mc.id}`,
+        lifecycleState: 'untouched',
+      }))
+
+      return {
+        protocolVersion: 'v1',
+        courses,
+        schedules: [],
+        sessions: [],
+        warnings: [],
+      }
+    } catch (error) {
+      return {
+        protocolVersion: 'v1',
+        courses: [],
+        schedules: [],
+        sessions: [],
+        warnings: [`Failed to sync from Moodle: ${error.message}`],
+      }
     }
   },
 
@@ -58,7 +84,7 @@ export default {
         schedules: payload.schedules?.length ?? 0,
         sessions: 0,
       },
-      warnings: ['Moodle push is not yet implemented.'],
+      warnings: ['Moodle push is metadata-only. Remote data was not modified.'],
     }
   },
 }
