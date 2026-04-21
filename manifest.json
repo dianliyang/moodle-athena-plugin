@@ -16,7 +16,7 @@
   },
   "network": {
     "domains": [
-      "*"
+      "elearn.informatik.uni-kiel.de"
     ]
   }
 }

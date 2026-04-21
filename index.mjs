@@ -1,10 +1,13 @@
+const DEFAULT_MOODLE_URL = 'https://elearn.informatik.uni-kiel.de'
+
 export default {
   config: [
     {
       key: 'moodleUrl',
       label: 'Moodle Site URL',
       type: 'text',
-      placeholder: 'https://moodle.your-university.edu',
+      defaultValue: DEFAULT_MOODLE_URL,
+      placeholder: DEFAULT_MOODLE_URL,
       description: 'The base URL of your Moodle site.',
     },
     {
@@ -28,7 +31,11 @@ export default {
 
   async pull(context) {
     const config = (await context.getConfig()) ?? {}
-    const { moodleUrl, authMethod, token } = config
+    const {
+      moodleUrl = DEFAULT_MOODLE_URL,
+      authMethod = 'token',
+      token,
+    } = config
 
     if (!moodleUrl) {
       return {
