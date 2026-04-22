@@ -16,8 +16,11 @@ jobs:
 
       - name: Create ZIP archive
         run: |
-          # Package manifest and implementation
-          zip -r moodle-sync.zip manifest.json index.mjs
+          # Athena imports GitHub plugin releases by extracting one top-level
+          # plugin root folder, then reading manifest.json and index.mjs from it.
+          mkdir -p moodle-sync
+          cp manifest.json index.mjs moodle-sync/
+          zip -r moodle-sync.zip moodle-sync
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
