@@ -88,7 +88,14 @@ async function fetchMoodleJson(context, baseUrl, config, wsfunction, params) {
   return parsed
 }
 
-async function ensureBrowserLogin(context, baseUrl) {
+function normalizePath(value, fallback) {
+  const raw = typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : fallback
+  return raw.startsWith('/') ? raw : `/${raw}`
+}
+
+async function ensureBrowserLogin(context, baseUrl, loginPath = '/login/index.php') {
   const response = await context.fetch({
     url: `${baseUrl}/my/`,
     method: 'GET',
@@ -99,7 +106,7 @@ async function ensureBrowserLogin(context, baseUrl) {
   }
 
   const authResult = await context.browserAuth({
-    url: `${baseUrl}/login/index.php`,
+    url: `${baseUrl}${loginPath}`,
     completeUrlPrefix: `${baseUrl}/my/`,
   })
 
@@ -319,7 +326,10 @@ function mapTaskSessions(course, syncedAt) {
 
 async function pullMoodle(context, config) {
   const baseUrl = normalizeBaseUrl(config.moodleUrl)
-  const authMethod = config.authMethod === 'browser' ? 'browser' : 'token'
+  const authMethod
+    = config.authMethod === 'browser' || config.authMethod === 'sso'
+      ? config.authMethod
+      : 'token'
   const token = typeof config.token === 'string' ? config.token.trim() : ''
   const warnings = []
 
@@ -333,8 +343,11 @@ async function pullMoodle(context, config) {
     }
   }
 
-  if (authMethod === 'browser') {
-    const loginWarning = await ensureBrowserLogin(context, baseUrl)
+  if (authMethod === 'browser' || authMethod === 'sso') {
+    const loginPath = authMethod === 'sso'
+      ? normalizePath(config.ssoLoginPath, '/auth/shibboleth/index.php')
+      : '/login/index.php'
+    const loginWarning = await ensureBrowserLogin(context, baseUrl, loginPath)
     if (loginWarning) {
       return {
         protocolVersion: 'v1',
@@ -418,7 +431,16 @@ export default {
       options: [
         { value: 'token', label: 'Web Service Token' },
         { value: 'browser', label: 'Browser Login (Cookie)' },
+        { value: 'sso', label: 'SSO Login (Shibboleth)' },
       ],
+    },
+    {
+      key: 'ssoLoginPath',
+      label: 'SSO Login Path',
+      type: 'text',
+      defaultValue: '/auth/shibboleth/index.php',
+      placeholder: '/auth/shibboleth/index.php',
+      description: 'Used by SSO Login. Keep the default for Kiel Informatics Moodle unless your Moodle uses another SSO path.',
     },
     {
       key: 'token',
